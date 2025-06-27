@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT 学习笔记</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 40px 20px; /* 调整内边距，取消垂直居中 */
+            color: #333;
+        }
+
+        .page-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 顶部对齐 */
+            gap: 30px; /* 内容和目录的间距 */
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 主容器 */
+        .main-container {
+            flex-grow: 1; /* 占据剩余空间 */
+            max-width: 800px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 24px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        /* 目录样式 */
+        #toc-nav {
+            width: 220px;
+            flex-shrink: 0; /* 防止目录被压缩 */
+            position: sticky;
+            top: 40px; /* 距离顶部的距离 */
+            align-self: flex-start; /* 确保自身顶部对齐 */
+        }
+
+        #toc-nav h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        #toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            max-height: calc(100vh - 100px); /* 限制最大高度并允许滚动 */
+            overflow-y: auto;
+        }
+
+        #toc-list li {
+            margin-bottom: 8px;
+        }
+
+        #toc-list a {
+            text-decoration: none;
+            color: #5f6368;
+            display: block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        #toc-list a:hover {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+        }
+        
+        #toc-list .toc-level-0 > a {
+            font-weight: 600;
+            color: #343a40;
+        }
+
+        #toc-list .toc-level-1 > a {
+            padding-left: 28px; /* 子项缩进 */
+        }
+        
+        /* 折叠按钮样式 */
+        .collapsible {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 18px;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible:hover, .collapsible.active {
+            background-color: #d2e3fc;
+        }
+
+        /* 嵌套的折叠按钮 */
+        .collapsible.nested {
+            background-color: #f8f9fa; /* 使用更柔和的背景色 */
+            color: #343a40;
+            font-size: 16px;
+            font-weight: 500;
+            margin-left: 15px; /* 向内缩进 */
+            width: calc(100% - 15px); /* 调整宽度以适应缩进 */
+        }
+
+        .collapsible.nested:hover, .collapsible.nested.active {
+            background-color: #e9ecef;
+        }
+
+        .collapsible.nested:after {
+            color: #343a40;
+        }
+
+        /* 折叠按钮后的符号 */
+        .collapsible:after {
+            content: '+';
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a73e8;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active:after {
+            transform: rotate(45deg); /* "加号" 旋转 45 度变成 "乘号" */
+        }
+
+        /* 折叠内容区域 */
+        .content {
+            padding: 0 18px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            background-color: #ffffff;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .collapsible:not(.nested) + .content {
+             border-left: 1px solid #e0e0e0;
+             border-right: 1px solid #e0e0e0;
+             border-bottom: 1px solid #e0e0e0;
+        }
+
+        .content-inner {
+            padding: 20px 0;
+        }
+
+        .content-inner h4 {
+            color: #2c3e50;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e8f0fe;
+        }
+
+        .content-inner ul {
+            list-style-position: inside;
+            padding-left: 10px;
+        }
+
+        .content-inner li {
+            margin-bottom: 8px;
+        }
+
+        .content p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .content img {
+            width: 100%;
+            max-width: 700px; /* 增大图片最大宽度 */
+            border-radius: 8px;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .content img:hover {opacity: 0.7;}
+
+        /* Image Modal Styles */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed; /* 固定定位，覆盖整个页面 */
+            z-index: 1000; /* 置于顶层 */
+            padding-top: 60px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* 如果图片过大则可以滚动 */
+            background-color: rgba(0,0,0,0.9); /* 半透明黑色背景 */
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 1000px;
+            /* 动画与交互效果 */
+            animation-name: zoom;
+            animation-duration: 0.4s;
+            transition: transform 0.2s ease;
+            cursor: grab; /* 新增：默认光标为"抓取" */
+        }
+
+        .modal-content.grabbing {
+            cursor: grabbing; /* 新增：拖动时光标为"抓取中" */
+        }
+
+        @keyframes zoom {
+            from {transform:scale(0.1)}
+            to {transform:scale(1)}
+        }
+
+        .modal #caption {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+            text-align: center;
+            color: #ccc;
+            padding: 10px 0;
+            height: 150px;
+        }
+
+        .modal .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .modal .close:hover,
+        .modal .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* 搜索框样式 */
+        #search-widget {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            z-index: 1001;
+            transition: width 0.3s ease-in-out;
+        }
+
+        #searchInput {
+            width: 250px;
+            padding: 12px 20px;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease-in-out;
+            font-family: inherit;
+        }
+
+        #searchInput:focus {
+            width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #d2e3fc;
+        }
+
+        #searchResults {
+            display: none;
+            position: absolute;
+            top: 110%;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            margin-top: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #f0f0f0;
+        }
+
+        #searchResults a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #searchResults a:hover {
+            background-color: #f5f5f5;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="search-widget">
+    <input type="text" id="searchInput" placeholder="搜索笔记...">
+    <div id="searchResults"></div>
+</div>
+
+<div class="page-wrapper">
+    <div class="main-container">
+        <h1>ICT 核心内容笔记</h1>
+
+        <button type="button" class="collapsible">第一章: 市场结构 (Market Structure)</button>
+        <div class="content">
+            <div class="content-inner">
+                <p>市场结构（Market Structure）是判断价格运⾏⽅向的基本⽅法。通过正确地识别市场结构，我们可以避免与市场趋势背道⽽驰，同时也有助于我们在⾏情反转的初期及时抓住机会。</p>
+
+                <button type="button" class="collapsible nested">买⽅市场结构 / Bullish Market Structure</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>由更⾼的⾼点（Higher High, HH）和更⾼的低点（Higher Low）所组成，价格不段向上突破，表明此时价格有向上传递的意愿。</p>
+                        <ul>
+                            <li>市场呈现上升趋势的结构。</li>
+                            <li>价格创造了⼀系列更⾼的⾼点（Higher Highs, HH）和更⾼的低点（Higher Lows, HL）。</li>
+                            <li>⾼点不断地被突破。</li>
+                            <li>低点不断地被抬⾼。</li>
+                            <li>这意味着买⽅在市场上占据主导地位，需求强劲，价格持续上涨。</li>
+                            <li>常⻅于⽜市。</li>
+                        </ul>
+                        <img src="01/Bullish Market Structure.jpg" alt="买⽅市场结构 / Bullish Market Structure">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">卖⽅市场结构 / Bearish Market Structure</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>由更低的⾼点（Lower High, LH）和更低的低点（Lower Low, LL）所组成，价格不段向下跌破，表明此时价格有向下传递的意愿。</p>
+                        <ul>
+                            <li>市场呈现下降趋势的结构。</li>
+                            <li>价格创造了⼀系列更低的⾼点（Lower Highs, LH）和更低的低点（Lower Lows, LL）。</li>
+                            <li>低点不断地被跌破。</li>
+                            <li>⾼点不断地降低。</li>
+                            <li>这意味着卖⽅在市场上占据主导地位，供应强劲且需求减弱，导致价格持续下跌。</li>
+                            <li>常⻅于熊市。</li>
+                        </ul>
+                        <img src="01/Bearish Market Structure.jpg" alt="卖⽅市场结构 / Bearish Market Structure">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">市场结构破坏 / Market Structure Break</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当⼀个波段⾼点/低点被突破/跌破时，我们称之为市场结构破坏（Market Structure Break, MSB），这表明价格传递的延续。</p>
+                        <p>別名：结构破坏 / BOS (Break of Structure)</p>
+                        <img src="01/Market Structure Break.jpg" alt="市场结构破坏 / Market Structure Break">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">市场结构转移 / Market Structure Shift</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当「最低的低点的前⼀个⾼点被突破」或「最⾼的⾼点的前⼀个低点被跌破」时，我们称之为市场结构转移（Market Structure Shift），这表明价格传递⽅向的改变。</p>
+                        <p>別名：特征转换 / CHOCH (Change of Charachter)</p>
+                        <p>⼀个⾼效的 MSS 应该伴随 Liquidity Sweep 和 Displacement 的出现，同时创造出 Imbalance。这些概念会在后⾯的章节补充。</p>
+                        <img src="01/Market Structure Shift.jpg" alt="市场结构转移 / Market Structure Shift">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="collapsible">第二章: 流动性 (Liquidity)</button>
+        <div class="content">
+            <div class="content-inner">
+                <p>在介绍 ICT / SMC 时，我们提到过流动性。价格只会以流动性和失衡区作为⽬标进⾏位移，这⼀章节我们要来深入探讨流动性。</p>
+                <p>机构资⾦在进场时需要进⾏⼤量的订单匹配（Order Pairing），所以并不是图表上的所有价格都可以作为机构进场的成本价。机构在进场时需要依靠⼤量的流动性（Liquidity），以下⼏个位置是 Liquidity 可能存在的地⽅。</p>
+                <ul>
+                    <li>波段⾼点（Swing High） / 波段低点（Swing Low）</li>
+                    <li>等⾼点（Equal High, EQH）/ 等低点（Equal Low, EQL）</li>
+                </ul>
+
+                <button type="button" class="collapsible nested">辨识流动性</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <h4>买⽅流动性 / Buyside Liquidity (BSL)</h4>
+                        <p>当⼀个明确的⾼点被突破时，激进的投机资⾦会认为此时价格即将离开区间，并展开⼤幅上涨。</p>
+                        <p>所以当价格发⽣突破时，会出现⼤量的买入订单，且前期的空单⽌损会被触发（买入平仓），提供 Smart Money 进⾏ Order Paring 所需的 Liquidity。</p>
+                        <p>Smart Money 会在此处和投机钱交换筹码，利⽤投机钱的买入订单进⾏卖出，完成空单资⾦进场。</p>
+                        <p>此时，我们将投机钱的追多买入订单称为买⽅流动性（Buyside Liquidity, BSL）。</p>
+
+                        <h4>卖⽅流动性 / Sellside Liquidity (SSL)</h4>
+                        <p>当⼀个明确的低点被跌破时，激进的投机资⾦会认为此时价格即将离开区间，并展开⼤幅下跌。</p>
+                        <p>所以当价格发⽣跌破时，会出现⼤量的买入订单，且前期的多单⽌损会被触发（卖出平仓），提供 Smart Money 进⾏ Order Paring 所需的 Liquidity。</p>
+                        <p>Smart Money 会在此处和投机钱交换筹码，利⽤投机钱的卖出订单进⾏买入，完成多单资⾦进场。</p>
+                        <p>此时，我们将投机钱的追空买入订单称为卖⽅流动性（Sellside Liquidity, SSL）。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">波段⾼ / 低点（Swing High / Swing Low）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>Swing High 指的是图表中明确的⾼点。</p>
+                        <p>此处通常是投机钱放置⽌损的位置，会存在 Liquidity。</p>
+                        <p>当⼀个明确的 Swing High 被突破时，我们可以关注此时价格是否尊重这个⾼点的 BSL。</p>
+                        <p>当⼀个明确的 Swing Low 被跌破时，我们可以关注此时价格是否尊重这个低点的 SSL。</p>
+                        <p>请勿在价格发⽣突破 / 跌破时直接追，因为你不能确定他是否会被尊重。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">等⾼点 / 等低点（Equal High, EQH / Equal Low, EQL）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当两个以上 Swing High / Swing Low 重合时，我们可以称他为 EQH / EQL。</p>
+                        <p>和 Swing High / Swing Low ⼀样，会存在 BSL / SSL。</p>
+                        <p>和 Swing High / Swing Low 的区别在于这部分的流动性是被验证过的，效⼒会更强⼀点。</p>
+                        <p>请勿在价格发⽣突破 / 跌破时直接追，因为你不能确定他是否会被尊重。</p>
+                        <img src="02/Equal High,EQH Equal Low,EQL.jpg" alt="等⾼点 / 等低点">
+                    </div>
+                </div>
+                
+                <button type="button" class="collapsible nested">流动性清扫 / Liquidity Sweep</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>别名：</p>
+                        <ul>
+                            <li>Stop Loss Hunt (SH / SLH)：⽌损猎杀。</li>
+                            <li>Liquidity Grab (Grab)：流动性抢夺。</li>
+                            <li>Liquidity Raid (Raid)：流动性袭击。</li>
+                            <li>Swing Failure Pattern (SFP)：失败摆动型态。</li>
+                            <li>Fu：我也不知道这是啥，反正意思都⼀样。</li>
+                        </ul>
+                        <p>Liquidity Sweep 指的是价格对 Liquidity 进⾏突破后快速收回的⾏为。</p>
+                        <p>当价格进⾏突破后，聪明钱会和投机钱完成 Order Pairing，双⽅筹码进⾏交换，随即反转⾏情。</p>
+                        <p>Liquidity Sweep 是每⼀段多头 or 空头结构的起点。</p>
+                         <img src="02/Liquidity Sweep.jpg" alt="流动性清扫">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">流动性运⾏与价格传递 / Liquidity Run and Price Delivery</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当价格掠夺反向流动性后，会开始进⾏价格传递。这个⾏为我们称之为流动性运⾏（Liquidity Run）。</p>
+                        <h4>低阻⼒流动性运⾏ / Low Resistance Liquidity Run (LRLR)</h4>
+                        <p>当价格在传递的过程中⼗分顺畅，遇到反向流动性时没有过多的停留时（阻⼒低），我们称这种现象为低阻⼒流动性运⾏ / Low Resistance Liquidity Run (LRLR)。</p>
+                        <h4>⾼阻⼒流动性运⾏ / High Resistance Liquidity Run (HRLR)</h4>
+                        <p>当价格在传递的过程中不太顺畅，多数时间处在震荡状态（阻⼒強），我们称这种现象为⾼阻⼒流动性运⾏ / High Resistance Liquidity Run (HRLR)，这表明此时的价格传递并不是很强势。</p>
+                        <p>当我们看⻅ HRLR 时，我们可以预期价格在反转后出现强势的单⽅向价格传递，将价格在 HRLR 产⽣的阻⼒轻松突破并走出LRLR。</p>
+                        <img src="02/Liquidity Run and Price Delivery.jpg" alt="流动性运⾏与价格传递">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">传递状态改变 / Change in State of Delivery（CISD）</button>
+                <div class="content">
+                    <div class="content-inner">
+                         <p>当价格完成 Liquidity Sweep 之后，如果消化流动性的连续K线之收盘价被吞噬，则此时我们可以认为 Price Delivery 的⽅向即将发⽣了改变，这个⾏为我们称为 Change in State of Delivery（CISD）。与 MSS 类似，CISD也是可以⽤来判断反转的价格⾏为。</p>
+                         <img src="02/Change in State of Delivery（CISD）.jpg" alt="传递状态改变">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="collapsible">第三章: 失衡 / Imbalance</button>
+        <div class="content">
+            <div class="content-inner">
+                <p>我们提到过价格只会以流动性和失衡区作为⽬标进⾏位移，上⼀个章节我们详细解释了流动性，这⾥我们要解释失衡的概念。</p>
+                <p>当价格出现⼤幅度的位移（Displacement）时，我们可以认为此时聪明钱挟带⼤量资⾦介入市场。⼤量资⾦进场时，由于价格出现⼤幅度的位移，会导致⼀部分限价挂单⽆法有效成交（Inefficiency），导致特定区域出现流动性流动性失衡（Inbalance）。</p>
+                <p>当流动性出现失衡时，聪明钱会引导价格回到失衡区域将遗留的订单成交（Rebalance）。当失衡区的流动性被 Rebalance 后，价格将延续原有的传递⽅向继续运⾏。</p>
+                <p>这段叙述充分解释了 ICT/SMC 中「价格只以流动性和失衡区作为⽬标进⾏位移」的观念。</p>
+                <p>如果聪明钱想要获得利润，那么只有两个动作要做：</p>
+                <ul>
+                    <li>1. 掠夺投机钱的⽌损订单。</li>
+                    <li>2. 成交⾃⼰未能成交的订单。</li>
+                </ul>
+
+                <button type="button" class="collapsible nested">公允价值缺⼝ / Fair Value Gap（FVG）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当三根连续的K线出现时，如果第⼀根K线和第三根K线的引线没有完全重合，此时我们称中间区域为公允价值缺⼝（Fair Value Gap, FVG），这表明了价格在这个区间内存在失衡，演算法会在未来的某⼀个时刻引导价格回到此处进⾏ Rebalance。</p>
+                        <p>补充：我们在图表上会以（＋）代表看涨，（－）代表看跌。</p>
+                        <p>别名：</p>
+                        <ul>
+                            <li>Imbalance (IMB)：失衡</li>
+                            <li>Inefficiency：低效</li>
+                            <li>Buyside Imbalance Sellside Inefficiency (BISI)：买⽅失衡卖⽅低效，即 +FVG。</li>
+                            <li>Sellside Imbalance Buyside inefficiency (SIBI)：卖⽅失衡买⽅低效，即 -FVG。</li>
+                            <li>Liquidity Void (LV)：流动性缺失。</li>
+                            <li>Liquidity Gap (LG)：流动性缺⼝。</li>
+                        </ul>
+                        <p>FVG 的中线称为 Consequent Encroachment（CE）。</p>
+                        <img src="03/Fair Value Gap（FVG）.jpg" alt="公允价值缺⼝ / Fair Value Gap（FVG）">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">反向公允价值缺⼝ / Inversion Fair Value Gap（IFVG）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当价格经过 FVG 时直接进⾏吞噬，不对这个 FVG 进⾏ Rebalance。则此处的订单流向会发⽣反转，此时我们称这个被吞噬的 FVG 为反向公允价值缺⼝（Inversion Fair Value Gap）。⼀般来说 IFVG 的效⼒会比 FVG 更强。</p>
+                        <img src="03/Inversion Fair Value Gap（IFVG）.jpg" alt="反向公允价值缺⼝ / Inversion Fair Value Gap（IFVG）">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">平衡价格区间 / Balance Price Range（BPR）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当两个反向的 FVG 重叠时，我们将重叠区域称作平衡价格区间（Balance Price Range, BPR）。价格在进入 BPR 时应该快速做出反应并且出现强烈的 Displacement。</p>
+                        <img src="03/Balance Price Range（BPR）.jpg" alt="平衡价格区间 / Balance Price Range（BPR）">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">Institutional Order Flow Entry Drill (IOFED)</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当⾏情极度强势时，可能会存在 FVG 不被有效填补的情况，我们称为 IOFED。IOFED 的出现必须满⾜以下两个条件：</p>
+                        <ul>
+                            <li>⾏情出现⼤幅度 Displacement 并形成 FVG。</li>
+                            <li>价格快速回填 FVG，且回填幅度不超过 FVG 的 50%。</li>
+                        </ul>
+                        <p>当这种价格⾏为出现时，我们称其为 IOFED，意味着此时的价格传递极度强势。</p>
+                        <p>在某些比较严格的定义中，会认为必须在 FVG 形成后的下⼀根K线立即 Rebalance 并收针才能被称为IOFED。</p>
+                        <img src="03/Institutional Order Flow Entry Drill (IOFED).jpg" alt="Institutional Order Flow Entry Drill (IOFED)">
+                    </div>
+                </div>
+                
+                <button type="button" class="collapsible nested">新周开盘缺⼝ / New Week Open Gap（NWOG）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>在股市、期货交易市场中，周末⼀般是处于休市状态的，因此周末的图表会是静⽌的。所以⼀但周末出现价格波动，图表会⽆法及时显⽰，造成周⼀的开盘价和前⼀周周五的收盘价出现落差。此时这个落差（也称跳空）我们称之为新周开盘缺⼝（New Week Open Gap）。</p>
+                        <p>当 NWOG 出现时，此处的挂单同样处于未成交状态，因此也会存在失衡的情况。未来价格会倾向对 NWOG 进⾏ Rebalance。</p>
+                        <p>由于加密货币市场是 24/7 处于开盘状态的，这个现象在加密货币市场比较不常出现。但我们仍然可以透过观察CME 期货缺⼝得到类似的效果。</p>
+                        <p>CME 期货图表可以透过在 TradingView 搜索 BTC1!（比特币期货）、ETH1!（以太币期货）的⽅式查询。</p>
+                        <p>类似的概念还有新⽇开盘缺⼝（New Day Open Gap, NDOG），但在加密货币市场中基本上⽤不到。</p>
+                        <img src="03/New Week Open Gap（NWOG）.jpg" alt="新周开盘缺⼝ / New Week Open Gap（NWOG）">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="collapsible">第四章: 供给与需求 / Supply and Demand</button>
+        <div class="content">
+            <div class="content-inner">
+                <p>我们知道，机构在市场中的⼀举⼀动会⼤幅影响市场走向。因此我们可以尝试在图表上寻找机构的⾜迹，跟随机构的进场点位获取利润。</p>
+
+                <button type="button" class="collapsible nested">订单块 / Order Block （OB）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>Order Block (OB) 是指市场中机构资⾦或⼤资⾦玩家⼤规模下单的区域。这些区域通常标志着市场价格的关键转折点或延续点，因为机构投资者的资⾦量庞⼤，价格往往会在这些区域附近形成⽀撑或阻⼒。在图表中寻找 OB 的⽅式如下：</p>
+                        <p>当价格创造出⼀个明显的 Swing Point 后，价格往往会进⾏反转并出现⼤幅度的 Displacement。</p>
+                        <p>此时我们可以标注出与价格传递⽅向相反的最后⼀根K线。</p>
+                        <p>此时这根 K 线所形成的区间就是我们想找的 Order Block。</p>
+                        <img src="04/Order Block （OB）.jpg" alt="Order Block (OB)">
+                        <p>圖中標記了每⼀根 OB 和他們所對應的價格傳遞⽅向。簡單來說 OB 就是在價格移動後找出他的最後⼀根反向K線，那根K線就是我們要的 OB。</p>
+                        <p>看跌的 OB 可以被视作供给（Supply）区间，看涨的 OB 可以被视作需求（Demand）区间。</p>
+                        <p>OB 的画法有很多种，有些⼈只会将 OB 的实体部分（不包含引线） 视作 OB，有些⼈则是将反向的连续 K 线都视作⼀整块 OB。其实没有绝对的对错，重点还是看价格回到 OB 时的价格⾏为。</p>
+                        <p>OB 的中线称为 Mean Thershold（MT）。</p>
+                        <p>就我个⼈⽽⾔，多数时候我只会将实体部分视作订单块的有效区间，除非实体过⼩或者价格回到订单块引线区域时出现强⼒的反弹。</p>
+                        <p>订单块的形成原理如下：由于价格⼤幅移动时，我们可以视作聪明钱在此处介入市场。因此我们可以将价格⼤幅移动前的反向K线视作聪明钱进场前的操纵⾏为，⽬的是将价格移动到反向，取得⼀个相对便宜的筹码，再将主要部位介入市场。因此我们可以将 OB 视为聪明钱进场时留下的⾜迹，当价格回到 OB 时，聪明钱会试图在此处将未成交的订单补齐，再次促使价格移动。</p>
+                        <p>价格尊重 OB 且再次往反⽅向移动的⾏为称为缓解（Mitigation）。</p>
+                        <p>虽然 OB 很好找，看起来也很好⽤，但⼀个真正⾼效⼒的 OB 形成时应该满⾜以下三个条件：</p>
+                        <ul>
+                            <li>完成 Liquidity Sweep：聪明钱进场前操纵价格的表现。</li>
+                            <li>OB 形成后，出现⼤幅度的 Displacement，并且最好带有 FVG：聪明钱确实介入市场的表现。</li>
+                            <li>OB 形成后的 Displacement 最好同时完成 MSS：聪明钱确实介入市场的表现。</li>
+                        </ul>
+                        <p>⾼效⼒ OB 范例。</p>
+                        <img src="04/Order Block （OB）2.jpg" alt="高效力 Order Block (OB) 范例">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">破坏块 / Breaker Block（BB）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当我们看到⼀个 OB 形成且成功出现MSS，但之后这个 OB 却不被尊重，且价格直接击穿 OB 时，此处的订单流向会发⽣反转（类似 FVG 和 IFVG关系的）。看涨的 OB 将在之后转为看跌 OB，看跌 OB 将在之后转为看涨 OB。</p>
+                        <p>破坏块的形成原理如下：</p>
+                        <p>当⼀个订单块出现，价格也随即完成 MSS 时，如果这个 OB 没有被尊重，意味着此时这段价格传递实际上是⼀段「假的价格传递」，⽬的在于诱骗投机钱跟随趋势的延续进场以便聪明钱进⾏ Order Paring。</p>
+                        <p>当价格破坏掉这个 OB 时，实际上此时出现的才是真正的价格传递⽅向。⽽当聪明钱引导价格走出真正的传递⽅向后，聪明钱需要将前期诱骗投机钱所花费的成本收回。</p>
+                        <p>因此价格会在走出真正的⽅向后回到破坏块进⾏成本回收。</p>
+                        <p>此时是对投机钱⽽⾔则是唯⼀的解套机会，我们也可以在聪明钱回收成本时进场。</p>
+                        <img src="04/Breaker Block（BB）.jpg" alt="破坏块 / Breaker Block（BB）">
+                    </div>
+                </div>
+                
+                <button type="button" class="collapsible nested">缓解块 / Mitigation Block（MB）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>缓解块的结构及原理和破坏块极为类似，其区别在于破坏块是由⼀个基础的订单块经由 MSS 后再被反向吞噬，⽽缓解块则是订单块形成后没有 MSS，⽽是在走出 Failure Swing 后直接被反向吞噬。</p>
+                        <p>Failure Swing 指的是在顺势的波段中，未能成功走出 BOS 创造新⾼/低的⾏为，可以视作推动价格的⼒道正在衰减的⼀种表现。</p>
+                        <p>Mitigation Block 与 Breaker Block 的形成原理相同，其差异只在于 Mitigation Block 被破坏前没有做出 MSS。</p>
+                        <p>破坏块能使⽤的地⽅，同样都可以⽤缓解块作替代（后⾯讲解进场模型时会提到）。但效⼒⽅⾯ Breaker Block 会优于 Mitigation Block。</p>
+                        <img src="04/Mitigation Block（MB）.jpg" alt="缓解块 / Mitigation Block（MB）">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">推进块 / Propulsion Block（PB）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当价格回到订单块并且出现反转，随即⽣成⼀个新的订单块时，我们称之为推进块（Propulsion Block, PB）。推进块也被称为订单块中的订单块，当⼀个推进块出现时，可以理解成聪明钱在此处推动价格继续前进。</p>
+                        <p>当价格接触到推进块时，价格不应该突破推进块的 MT。</p>
+                        <p>当价格接触到推进块时，价格应该迅速离开推进块。</p>
+                        <img src="04/Propulsion Block（PB）.jpg" alt="推进块 / Propulsion Block（PB）">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">拒绝块 / Rejection Block（RB）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当价格在接触到关键⽔平（Key Level）时，如果价格此时收出⻓针，则我们会称这个动作为拒绝（Rejection），表明此时价格离开此处的意图极为强烈。这根针的引线部位则被称为拒绝块（Rejection Block）。</p>
+                        <img src="04/Rejection Block（RB）.jpg" alt="拒绝块 / Rejection Block（RB）">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">重夺塊 / Reclaimed Block</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>在前⾯我们提到过，订单块是聪明钱介入市场进⾏买入 / 卖出的痕迹。当市场结构出现反转时，曾经⽤来买入的订单块可能会被拿来卖出，曾经⽤来卖出的订单块可能会被拿来买入。此时。我们将这种订单块称为重夺块（Reclaimed Block）。</p>
+                        <p>如果要更深入解释 Reclaimed Block 的原理，则必须提及 MMXM（造市商模型）的概念。因此这边如果有疑惑是正常的，关于 MMXM 的概念会在后续的篇幅中深入解释。</p>
+                        <img src="04/Reclaimed Block.jpg" alt="重夺塊 / Reclaimed Block">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="collapsible">第五章: 银⾏间价格传递演算法 / IPDA</button>
+        <div class="content">
+            <div class="content-inner">
+                <h4>前⾔</h4>
+                <p>前⾯的章节所讲解的都是 ICT/SMC 中最基础的元素。从这个章节开始，我们将进入更核⼼、更着重于观念上的理论。这些理论描述的部分内容可能很难在图表上有⼀个标准化的形式，但对你的读图思维框架会起到非常重要的影响。如果你还没将前⾯的内容搞懂，请务必先好好复习，循序渐进地学习。</p>
+                <p>价格的移动不依赖于⽀撑与阻⼒，所谓⽀撑与阻⼒只是市场的假象。市场中价格的所有⾏为都由⼀只看不⻅的⼿在背后进⾏操纵，⽽这只「⼿」被称为银⾏间价格传递算法（Interbank Price Delivery Algorithm, IPDA）。</p>
+                <p>价格在传递时存在四种状态，分别为：</p>
+                <ul>
+                    <li>Expansion（扩张）</li>
+                    <li>Retracement（回撤）</li>
+                    <li>Consolidation（整理）</li>
+                    <li>Reversal（反转）</li>
+                </ul>
+                <p>价格在传递时有且仅有这四种状态，且会在这四种状态间转移，每种状态有其各⾃的特征，且状态转移时通常伴随着对关键价位或区间的接触。</p>
+                <img src="05/1.jpg" alt="IPDA 四种状态">
+                <p>附图为四种状态的转换关系。</p>
+
+                <button type="button" class="collapsible nested">Consolidation / 整理</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>Consolidation 是指价格在明确的交易区间（通道、箱体、三⾓等）内波动。</p>
+                        <ul>
+                            <li>表明价格没有⼤幅上涨或下跌的意愿。</li>
+                            <li>所有的⾏情都从震荡开启。</li>
+                            <li>关注震荡区间的 EQ。</li>
+                        </ul>
+                        <p>在价格抵达 Discount 或者 SSL 被掠夺时寻找多单机会，并在价格抵达 Premium 或者 BSL被掠夺时寻找空单机会。</p>
+                        <img src="05/Consolidation.jpg" alt="Consolidation / 整理">
+                        <p>附图为标准的 Consolidation。</p>
+                        <p>我们可以在 Premium（EQ上⽅）或 BSL 被掠夺时寻找空单机会，在 Discount（EQ下⽅）或 SSL 被掠夺时寻找多单机会，跟随做市商 Accumulation 的⾏为进⾏获利。</p>
+                        <p>同时也可以发现 Consolidation range 被跌破时价格出现了⼤幅度的 Displacement，可以视为⼀个典型的 Expansion。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">Expansion / 扩张</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>Expansion 指的是价格快速移动。</p>
+                        <ul>
+                            <li>当价格出现扩张时，代表做市商期望将该标的重新进⾏定价。</li>
+                            <li>Expansion 是 Price Delivery 最主要的部分。</li>
+                            <li>我们会期望 MSS 和 FVG 伴随 Expansion ⼀同出现。</li>
+                        </ul>
+                        <p>留意 EQ 或 EQ 附近的 OB 做进场。</p>
+                        <img src="05/Expansion.jpg" alt="Expansion / 扩张">
+                        <p>附图和前⼀张图是同⼀张，为标准的 Consolidation 接续 Expansion。</p>
+                        <p>当价格接触到 EQ ，或者尊重 EQ 附近的 OB 时，我们可以利⽤ EQ 附近的 OB 进场参与 Expansion 实际上是跟随做市商进⾏ Price Delivery 的⾏为进⾏获利。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">Retracement / 回撤</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>Retracement 指是价格回到最近创建的价格区间内。</p>
+                        <ul>
+                            <li>当价格回到近期价格区间时，表明做市商期望将价格重新定价⾄⽆法有效交易的公允价值缺⼝（FVG）。</li>
+                        </ul>
+                        <p>关注 FVG 进⾏进场。</p>
+                        <p>当价格回填 FVG 时，我们可以利⽤⾏情对 FVG 的填补程度判断当前⾏情的强势程度。</p>
+                        <img src="05/Retracement.jpg" alt="Retracement / 回撤">
+                        <p>附图和前两张图是同⼀张，是⼀个典型的 Retracement。这⾥可以看到价格在经历扩张后展开低位震荡，随即回撤⾄ FVG。</p>
+                        <p>我们可以在尊重 FVG 时，利⽤ FVG 进场。</p>
+                        <p>在 Retracement 结束时参与市场实际上是跟随做市商延续 Price Delivery 的⾏为进⾏获利。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">Reversal / 反转</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>反转是指当前趋势结束并且开始往反⽅向移动。</p>
+                        <ul>
+                             <li>当价格出现反转时，表明做市商已经取得⾜够的流动性，期望将价格往反⽅向移动寻求新的套利空间。</li>
+                        </ul>
+                        <p>关注 HTF POI 和 MSS/CISD。</p>
+                        <img src="05/Reversal.jpg" alt="Reversal / 反转">
+                        <p>附图和前三张图是同⼀张，为标准的 Reversal 结构。价格在掠夺低点的 BSL （同时触及⽇线图上的 Rejection）后向上进⾏拉升出现 MSS，后续完全否定前⽅的下跌趋势，展开新⼀轮的上涨。</p>
+                        <p>我们可以利⽤结构的变化判断 Reversal 是否发⽣。</p>
+                        <p>在确认 Reversal 出现时参与市场实际上是在跟随期望 Price Delivery 的价格反转。</p>
+                        <p>不要在价格未抵达 HTF POI 时赌⾏情的反转。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">回顾</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <img src="05/回顾.jpg" alt="回顾">
+                        <p>这⾥我们回顾⼀下整张图，观察 IPDA 在进⾏ Price Delivery 时的细节。</p>
+                        <ol>
+                            <li>⾸先价格在区间开启 Consolidation，在区间内来回进⾏波动进⾏吸筹。</li>
+                            <li>价格在最后⼀次触及 EQ 处的 OB 后开始 Expansion。</li>
+                            <li>随即再⼀次开始 Consolidation。</li>
+                            <li>触及 EQ 后开始 Retracement。</li>
+                            <li>Retracement ⾄ Expansion 时产⽣的 FVG，随即再次下跌并进入再⼀次的 Consolidation。</li>
+                            <li>最后将掠夺 H4 流动性并将价格传递⾄⽇线 POI。</li>
+                            <li>进⾏ Reversal并产⽣ MSS。</li>
+                            <li>开启新⼀轮传递。</li>
+                        </ol>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <button type="button" class="collapsible">第六章: 交易区间 / Dealing Range</button>
+        <div class="content">
+            <div class="content-inner">
+                <p>只要你能找到⼀个 Swing High 和 Swing Low，那这两个点之间的价格就能被称为⼀个「区间」。这对 Swing High 和 Swing Low 可以是任意两个点，当然，他们最好是「有意义的」，特别是出现 MSS 后的 Swing Point。以下是⼏个我们在交易中时常⽤到的 Swing Point：</p>
+                <ul>
+                    <li>上周⾼点 (Previous Week High, PWH)、上周低点（Previous Week Low）</li>
+                    <li>昨⽇⾼点 (Previous Day High, PDH)、昨⽇低点 (Previous Day Low, PDL)</li>
+                    <li>周⼀⾼点 (Monday High)、周⼀低点 (Monday Low)</li>
+                    <li>亚洲时段⾼点 (Asia High)、亚洲时段低点 (Asia Low)</li>
+                </ul>
+                <p>其实开盘价也可以作为交易 Setup 的⼀部分，这点会在之后 PO3 和 Time and Price 两个章节详细说明。</p>
+                <p>除了以上提到的⼏个 Swing Point，任何你找得到的波段⾼低点都可以作为你的区间 Setup。还是那句话，只要你知道⾃⼰在⼲嘛，你想怎么做都可以。</p>
+                <img src="06/Dealing Range.jpg" alt="Dealing Range">
+
+                <button type="button" class="collapsible nested">溢价折价区阵列矩阵 / Premium and Discount Array Matrix（PDA Matrix）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>这个名字看上去挺唬⼈，但其实就是整合⼀下前⾯的东⻄，看完你就能理解了。</p>
+                        <h4>溢价折价区 / Premium and Discount (P/D)</h4>
+                        <p>当我们定义好 Range 后，我们可以使⽤斐波那契测量出区间中线（0.5），如果你有认真观看我们前⾯的教程，你会知道区间的 0.5 那条线我们称作 Equilibrium (EQ)。在 ICT/SMC 中，我们会将区间 EQ 以上的部分视作溢价区（Premium），区间 EQ 以下称作折价区（Discount）。</p>
+                        <p>当价格运⾏⾄ Premium 时，我们可以认定价格当前处于超买状态，此时我们会倾向于寻找做空（short）机会；⽽当价格运⾏⾄ Discount 时，可以认定价格当前处于超买状态，此时我们会倾向于寻找做多（long）机会。</p>
+                        <img src="06/Premium and Discount (P.D).jpg" alt="Premium and Discount (P/D)">
+                        <p>此时，我们可以搭配前⾯学到的所有 FVG、OB、Liquidity，将他们和 Premium/Discount 整合在⼀起，会得到如下矩阵/阵列：</p>
+                        <img src="06/Premium and Discount (P.D)2.jpg" alt="Premium and Discount Array Matrix">
+                        <p>我们会把 OB、FVG、Liquidity 这些可能提供反向⼒道的元素统称为 PDA。</p>
+                        <p>这张图不需要记，你只需要知道当你拉出⼀个区间时，区间内会存在⼤量 PDA 由上到下排列，拥有这个概念就⾜够了。PDA的概念⼗分重要，在接下来的章节中会被反覆提起。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">内部流动性 & 外部流动性 / Internal Range Liquidity (IRL) & External Range Liquidity (ERL)</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p><b>外部流动性 / External Range Liquidity (ERL)</b>：指旧的⾼点或低点（old high、old low），可以简单理解成 Liquidity。</p>
+                        <p><b>内部流动性 / Internal Range Liquidity (IRL)</b>：指价格传递时所创造的各种指 OB、FVG。</p>
+                        <p>价格只会在 ERL 和 IRL 之间移动，当价格在执⾏单⽅向传递时，会在拿到 ERL 后执⾏ Retracement，直到 IRL 被 rebalance/mitigate，这个⾏为称为 ERL to IRL；随后价格会立即反转並继续向原⽅向传递，尝试拿掉 ERL，这个⾏为称为 IRL to ERL。</p>
+                        <p><b>Draw on Liquidity (DOL)</b>：</p>
+                        <p>因此，当价格在拿掉 ERL 之后，你会期望价格往回拿掉 IRL，这时你会关注图表上的某个 IRL，你会认为该 IRL 存在对价格的吸引⼒，你期望价格回到那个 IRL；同理，当价格填补完 IRL 之后，你会期望某个 ERL 存在对价格的吸引⼒，你期望价格传递过去拿掉那个 ERL 延续价格传递。</p>
+                        <p>此时，那个对价格存在吸引⼒的 PDA 就会是你认为的 DOL，DOL 应该是你在交易时最关注的元素，因为理论上价格对你的 DOL 的反应会直接影响你的所有决策。</p>
+                        <p>如果你经常看我画图，你⼏乎不会在我的图表上看到我标记出 DOL。但 DOL 的概念非常重要，你可以不把它画出来，但这个概念你必须有。因他在很多时候 DOL 会直接决定你的 Bias，这在后⾯会不断地提及。</p>
+                        <p>有⼀个类似的概念叫感兴趣的点位（Point of Interest, POI），基本上也是指你所关注的 PDA，在此不过多赘述。</p>
+                        <p><b>机构订单流（Institutional Order Flow, IOF）</b>：当价格在进⾏单⽅向传递时，同向的 PDA 会不断地被尊重，反向的 PDA 会不断地被突破。</p>
+                        <img src="06/Internal Range Liquidity (IRL) &.jpg" alt="Internal & External Range Liquidity">
+                        <p>标准的机构订单流和 ERL / IRL 的实例。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">最佳进场区间 / Optimal Trade Entry（OTE）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>最佳进场区间（Optimal Trade Entry, OTE）是 ICT 中⼀种常⻅的辅助进场⼯具。他不能单独使⽤，必须搭配前⾯提及的概念和元素。</p>
+                        <p>OTE 指的是斐波那契 0.62 - 0.79 区间，其 EQ 为0.705。当你在这个区间做进场时，通常可以拿到⼀个极为优秀的盈亏比。</p>
+                        <p>OTE 也可以帮助你寻找你的出场⽬标位，当然，这⼀切都必须搭配 DOL、PDA 和前⾯提及的各种概念。</p>
+                        <p>最后，切记不要在脱离其他概念的场景下使⽤ OTE，他只是⼀个辅助⼯具。</p>
+                        <img src="06/Optimal Trade Entry（OTE）.jpg" alt="Optimal Trade Entry（OTE）">
+                        <ul>
+                            <li>1：波段起点。</li>
+                            <li>0：波段终点（Retracement 开始的 Swing Point）。</li>
+                            <li>0.5：波段区间的 EQ。</li>
+                            <li>0.62 - 0.79：最佳进场区间，你可以关注此处的 PDA 做进场。</li>
+                            <li>0.705：最佳进场区间的 EQ，你可以关注此处的 PDA 作进场。</li>
+                            <li>-0.27：你可以寻找此处的 PDA 作为你的第⼀⽬标位（TP1）。</li>
+                            <li>-0.62：你可以寻找此处的 PDA 作为你的第⼆⽬标位（TP2）。</li>
+                            <li>-1：你可以寻找此处的 PDA 作为你的第三⽬标位（TP3）。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="collapsible">第七章: 进阶市场结构 / Advanced Market Structure</button>
+        <div class="content">
+            <div class="content-inner">
+                <p>这个章节的内容可能比较硬核，当中提到的所有概念都没有⼀个图表上的定式，但请务必努⼒尝试理解，这个章节的内容是我认为的 ICT/SMC 精髓所在。当你完全理解这个章节的内容，你会对市场结构和价格传递有非常深刻的理解。</p>
+                
+                <button type="button" class="collapsible nested">由上⾄下的分析 / Top-Down Analysis</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>当我们专注于⽇内交易时，我们很常会将经历专注在⼗五分钟级别图表（M15）上，但如果我们此时想要获得更宏观的价格⾏为，仅仅关注于 M15 图表上肯定是不够的，我们会往更⼤级别的图表（例如四⼩时级别图表）上去做分析；⽽如果我们此时想解读更细节的价格⾏为，显然 M15 图表也⽆法满⾜我们，我们会去查看更⼩级别的图表（例如⼀分钟级别图表）。 ICT/SMC 对各种时间级别的图表关系做了定义，规范化了每⼀个时间级别所对应的⾼时框图表及低时框图表，以及在不同时框下你应该专注于做什么。</p>
+                        <h4>名词解释：</h4>
+                        <ul>
+                            <li><b>M15</b>：這裡的 "M" 指的是 "Minute"，加上"15"所指代的就是⼗五分鐘級別圖表。我們在簡寫時間級別時會以 "字⺟＋數字"來指代該時間級別。例如"H4"指的就是四⼩時（Hour-4），"W1"指的就是週線圖（Week-1）。</li>
+                            <li><b>LTF/MTF/HTF</b>：低时框（Low Time Frame）／中时框（Middle Time Frame）／⾼时框（High Time Frame）</li>
+                        </ul>
+
+                        <h4>Time Frame Alignment</h4>
+                         <style>
+                            .tf-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            .tf-table th, .tf-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                            .tf-table th { background-color: #f2f2f2; color: #333; }
+                        </style>
+                        <table class="tf-table">
+                            <thead>
+                                <tr>
+                                    <th>HTF (⾼时框)</th>
+                                    <th>MTF (中时框)</th>
+                                    <th>LTF (低时框)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>你应该在此检视市场结构，透过 ERL/IRL 寻找你的 DOL，建立你的 Bias。</td>
+                                    <td>你应该在此寻找交易机会。</td>
+                                    <td>你应该在此细化你的进场。</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p>其实所谓的⾼中低时框关系并没有定义的如此严格，只要你喜欢，你也可以在 H1 找交易机会并且在 M3 进场，但这必须建立在你对不同时框间的关系⾜够了解的前提下。如果你对时空级别没有⼀个清晰的认知，那就乖乖按上⾯的表格来，不要⼲出在⽉线图找Bias然后直接跳到⼀分线进场这种傻事。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">Power of Three (PO3)</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>PO3 是 ICT/SMC 中⼗分核⼼的理念，本质上你依靠 ICT/SMC 作出的所有交易都是 PO3。如果你问我 ICT/SMC 中最重要的概念是什么，那我想我的答案就是 PO3。PO3 指的是价格的特定波动模式，主要分为以下三个阶段：</p>
+                        <ol>
+                            <li><b>积累阶段（Accumulation Phase）</b>：市场进入⼀个偏向 Consolidation 的阶段，聪明钱开始在特定的价格（不⼀定是区间）附近积累筹码。此时的价格⾏为会偏向稳定，有时可能会创造出清晰的 Swing Point / Liquidity。</li>
+                            <li><b>操纵阶段（Manipulation Phase）</b>：当Accumulation Phase 结束后，聪明钱会将市场往反⽅向操纵（假动作），掠夺掉Accumulation Phase 时建立的Swing Point / Liquidity，其概念与第⼀章提到的流动性掠夺相同。这个阶段的价格传递⽬的是为了诱骗投机钱追随⾏情从⽽完成 Order Paring。</li>
+                            <li><b>派发阶段（Distribution Phase）</b>：当市场完成掠夺后，价格会迅速往真实的传递⽅向进⾏价格传递，此时通常会出现明确的 Liquidity Run / Expansion，最终将价格传递到 DOL。</li>
+                        </ol>
+                        <img src="07/Power of Three (PO3).jpg" alt="Power of Three (PO3)">
+                        <p>任何存在流动性掠夺的地⽅本质上都算是 PO3，只要你的交易和流动性掠夺有关，那你就是在对⼀个 PO3 做交易（或者说你的交易就是在期望市场形成⼀个完整的PO3 ）。</p>
+                        <p>你会期望在市场完成 Manipulation 后进场，并在 Distribution 完成时出场。</p>
+                        <p>对⼀个level 做出流动性掠夺（假突破）后收回该level 之上的⾏为也称为海龟汤（Turtle Soup），在流动性掠夺并收回后直接进场交易的⾏为称为海龟汤进场（Turtle Soup Entry）。</p>
+                        <p>负责消化流动性的波段称为操纵脚（Manipulation Leg）。</p>
+                        <p>在交易 PO3 时，你会希望当前时框上的 Manipulation 进入了 HTF DOL；或者换个⾓度也可以理解成当前时框 Liquidity Sweep 进入 DOL 的⾏为在 LTF 是个 PO3（这是你在进场前最重要的 checkpoint，任何进场都需要搭配 DOL）。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">标准差 / Standard Deviation (STDV)</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>标准差（Standard Deviation, STDV）是 ICT 中⼀种常⻅的辅助进场⼯具。他不能单独使⽤，必须搭配前⾯提及的概念和元素。</p>
+                        <p>STDV 也可以帮助你寻找你的出场⽬标位，当然，这⼀切都必须搭配 PO3、 DOL、PDA 和前⾯提及的各种概念。</p>
+                        <p>最后，切记不要在脱离其他概念的场景下使⽤ STDV，他只是⼀个辅助⼯具。</p>
+                        <p>在 Manipulation Leg 上使⽤ STDV 可以帮助我们找出 PO3 的⽬标价位。以下是使⽤ STDV 辅助交易 PO3 的⽰意图。</p>
+                        <img src="07/Standard Deviation (STDV).jpg" alt="Standard Deviation (STDV)">
+                        <h4>Manipulation Leg</h4>
+                        <ul>
+                            <li>0：Manipulation Leg 的起點。</li>
+                            <li>0.5：Manipulation Leg 的 EQ 。</li>
+                            <li>1：Manipulation Leg 的終點。</li>
+                        </ul>
+                        <p>⼀段合格的 Manipulation Leg 應該要消化你在 HTF 的 DOL。當你判斷 Manipulation 結束且演算法正要開始執⾏ Distribution 時，你要在此時去尋找 Manipulation Phase 創造的 PDA 嘗試進⾏ Turtle Soup。</p>
+                        <p>正如我們在講解 IPDA 時所提到的，當價格從 Consolidation 轉向 Expansion 時，你會希望在 Consolidation 的 EQ 作進場。因此在做 PO3 進場時最完美的情況會是在 Manipulation Leg 的 EQ 處尋找 PDA 進場。不過當 PO3 完成 Manipulation 時，通常價格會擴張的非常迅速，因此也不⼀定要強求⾃⼰在 0.5 進場。</p>
+                        <h4>Distribution Phase</h4>
+                        <ul>
+                            <li>-1：Manipulation Leg 的 1:1 。</li>
+                            <li>-2 ~ -2.5（Retracement Range）：价格传递的回撤区间。当价格传递到这个区间时，有很⼤的概率会发⽣回撤，当价格传递不够强势时也有可能在此处直接反转。因此当你在交易 PO3 時，你应该考虑在此处寻找PDA 进⾏部分⽌盈（或⾄少设置保护⽌损/套保）。如果价格没有在这个区间反转，那说明此时价格传递非常强势。</li>
+                            <li>-3.5 ~ -4（Reversal Range）：价格传递的反转区间。当价格传递到这个区间时，有很⼤的概率会发⽣反转，你应该考虑在此处寻找 PDA 出场所有仓位。如果价格突破此处区间，那后⾯的涨/跌幅也跟你找到的 PO3 没关系了（有可能是更⾼时框上的 Distribution 导致价格传递⽅向没有在此处反转）。</li>
+                        </ul>
+                        <h4>STDV 进场步骤</h4>
+                        <ol>
+                            <li>找出 Manipulation Leg，收回时做进场（turtle soup）或者找 Manipulation 创造的 PDA 进场，最好是進在 EQ，但沒有的話也不⽤強求。</li>
+                            <li>拉出 STDV，去 -2 ~ -2.5 的找 PDA 部分⽌盈 or 全出。</li>
+                            <li>如果价格有到 -3.5 ~ -4 的 PDA 那最好全出。</li>
+                        </ol>
+                        <h4>交易实例</h4>
+                        <img src="07/Standard Deviation (STDV)2.jpg" alt="STDV 交易实例">
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">OHLC & OLHC</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>实际上每⼀根 K 线在 LTF 都是⼀个完整的 PO3 结构（但不⼀定会提供你良好的交易机会），这也是所谓分型（Fractal）的概念。</p>
+                        <p>当⼀根 K 线先向开盘价（Open）上⽅进⾏掠夺并创造⾼点（High），随后向下派发创造低点（Low），我们就可以称这个结构为 OHLC（Open/High/Low/Close）。</p>
+                        <p>当⼀根 K 线先向开盘价（Open）下⽅进⾏掠夺并创造低点（Low），随后向上派发创造⾼点（High），我们就可以称这个结构为 OLHC (Open/Low/High/Close)。</p>
+                        <img src="07/OHLC & OLHC.jpg" alt="OHLC & OLHC">
+                        <p>因此，你在交易 PO3 时实际上在 HTF 上看来你是在引线（Wick）处进场，如果你成功在 Distribution 完成时出场，那么你的出场位置会在另⼀端的引线处。</p>
+                        <p>结合这个概念，你会发现所谓的 "Bias"，不只是单纯地认为接下来的波段要涨还是跌。你的 Bias 实际上意味着你认为 HTF 上的下⼀根 K 线应该收成阴线（Bearish Candlestick）还是阳线（Bullish Candlestick）；你的 DOL 实际上意味着你认为 HTF 上的下⼀根 K 线的引线应该会插到哪⾥。</p>
+                        <p>这也是我们在本章节开头会先提及 Top-Down Analysis 的原因，正确的应⽤ HTF、LTF、分型等概念会让你 的交易系统更全⾯。如果你在交易时不去思考 HTF 正在发⽣什么事，那你的视⾓很容易受限于当前级别结构，有可能在 HTF 上正在发⽣回撤，但你在 LTF 上却认为这是⼀段反转，从⽽错失 HTF 上后续的趋势延续。</p>
+                    </div>
+                </div>
+                
+                <button type="button" class="collapsible nested">⽇內PO3 / Daily PO3</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>从⼀开始我们就知道，ICT/SMC 本质上是在根据流动性进⾏交易（Liquidity Trade）。⽽⼀天当中，不同的交易时段实际上存在流动性差异。这也是 ICT/SMC 的应⽤场景普遍在⽇内交易以下的原因，因为我们可以透过⼀天当中的流动性变动进⾏获利。在⽇內交易中，我們會經歷三個交易時段，這三個交易時段構成了⼀整天的 PO3 。</p>
+                        <h4>亚洲交易时段（Asia Session）</h4>
+                        <p>对应着⼀天当中的 Accumulaton。</p>
+                        <ul>
+                            <li>由香港、东京等地的机构主导。</li>
+                            <li>时段：08:00 ~ 14:00 (UTC+8)</li>
+                            <li>亚洲杀戮区（Asia Killzone）: 08:00 ~ 10:00(UTC+8)</li>
+                        </ul>
+                        <p>通常我们不会想在 Asia Session 进⾏交易，但我们会关注这段时间建立的 Accumulation 区间（Asia Range），并关注区间后续被掠夺的情况。</p>
+
+                        <h4>伦敦交易时段（London Session）</h4>
+                        <p>对应着⼀天当中的 Manipulation。</p>
+                        <ul>
+                            <li>由以伦敦为⾸的欧洲机构主导。</li>
+                            <li>时段：
+                                <ul>
+                                    <li>夏令时：15:00 ~ 23:00 (UTC+8)。</li>
+                                    <li>夏令时：16:00 ~ 24:00 (UTC+8)。</li>
+                                </ul>
+                            </li>
+                             <li>伦敦开盘杀戮区（London Open Killzone）：
+                                <ul>
+                                    <li>夏令时：15:00 ~ 18:00 (UTC+8)。</li>
+                                    <li>冬令时：16:00 ~ 19:00 (UTC+8)。</li>
+                                </ul>
+                            </li>
+                             <li>伦敦收盘杀戮区（London Close Killzone）：
+                                <ul>
+                                    <li>夏令时：21:00 ~ 23:00 (UTC+8)。</li>
+                                    <li>冬令时：21:00 ~ 23:00 (UTC+8)。</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p>我们会在 London Session 关注 Asia Range 的掠夺情况。通常当时间从 Asia Session 进入 London Session时，交易波动会开始变⼤，London Killzone 指的是开盘后的两个⼩时和收盘前的两个⼩时，此时交易量会达到顶峰，流动性充⾜，容易创造⼀天当中的最⾼点和最低点。</p>
+                        <p>London Session 的市场会充斥着各种假动作（Judas Swing），根据我的经验，在伦敦盘进⾏的交易最好倾向保守。</p>
+                        
+                        <h4>纽约交易时段（New York Killzone）</h4>
+                        <p>对应着⼀天当中的 Distribution。</p>
+                         <ul>
+                            <li>由以华尔街为⾸的美国机构主导。</li>
+                            <li>时段：
+                                <ul>
+                                    <li>夏令时：21:30 ~ 04:00 (UTC+8)。</li>
+                                    <li>夏令时：22:30 ~ 05:00 (UTC+8)。</li>
+                                </ul>
+                            </li>
+                             <li>纽约杀戮区（New York Killzone）：
+                                <ul>
+                                    <li>夏令时：21:30 ~ 23:30 (UTC+8)。</li>
+                                    <li>冬令时：22:30 ~ 00:30 (UTC+8)。</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p>华尔街掌握着世界上最庞⼤的资⾦，因此 New York Session 是⼀天当中交易量/流动性的顶峰。通常 New York Session 在经历完 London Manipulation 后，会推动价格进⾏单⽅⾯的传递，Distribution 完成当天价格的⽬标位，创造出当⽇的最⾼点或最低点。</p>
+                        <p>New York Session 的任务是完成当⽇的 Distribution ，根据我的经验，如果你在 London Session 或 New York Kilzone拿到了⼀个绝佳的进场位置，可以尝试在此时完成你的最终⽌盈位。</p>
+                        <p>关于⽇内 PO3 的内容有个概念就⾏了。London Session / New York Session 确实是⼀天当中最适合交易的时段，但在我看来加密货币的时区特性是非常混乱的，有时你也会看到 Asia Range 直接走 Expansion 然后接下来震荡⼀整天。这段内容最多就是让你在进场时可以取得更多时区⽅⾯的共振，借此增强你交易时的信⼼和完善交易思路。</p>
+                        <p>不要简单的认为你可以单凭这⾥的内容，每天都在伦敦盘找到最优进场点⼀路拿到纽约盘派发顶点。</p>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible nested">造市商模型 / Market Maker Model（MMXM）</button>
+                <div class="content">
+                    <div class="content-inner">
+                        <p>造市商模型（Market Maker Model）指的是造市商执⾏价格传递的基本运作结构，根据买入和卖出分为「造市商买入模型（Market Maker Buy Model, MMBM）」和「造市商卖出模型（Market Maker Sell Model, MMSM）」两种，MMBM 和 MMSM 我们⼜会将他们统称为 MMXM。</p>
+                        <p>MMXM 基本围绕着以下两个重点描述价格传递：</p>
+                        <ul>
+                            <li>ERL & IRL：价格只会在 ERL (Liquidity) 和 IRL (OB / FVG) 之间传递。</li>
+                            <li>PO3：价格传递会经历 Accumulation / Manipulation / Distribution 三个阶段。</li>
+                        </ul>
+                        <p>确保你完全理解这两点，如果还没理解那就回去复习，还是理解不了就直接来问我。</p>
+                        <img src="07/Market Maker Model（MMXM）.jpg" alt="Market Maker Model（MMXM）">
+                        <ul>
+                            <li><b>Original Consolidation</b>：正如我们在 IPDA 所提到的，所有的价格传递都会从 Consolidation 状态开始。</li>
+                            <li><b>Low Risk Buy (LRB)、Low Risk Sell (LRS)</b>：在价格传递反转的初始阶段（取得⾼时框流动性后）提供的交易机会，在此处参与价格传递可以获得优秀的盈亏比。</li>
+                            <li><b>Accumulation</b>：PO3 中的积累吸筹阶段。</li>
+                            <li><b>Smart Money Reversal（聪明钱反转）</b>：低时框价格传递到⾼时框，取得⾼时框流动性后发⽣反转的⾏为。</li>
+                            <li><b>Distribution</b>：价格在做完 SMR 后向⾼时框的 ERL 传递时经历的第⼀次派发，此处主要会派发掉 SMR 后 LRS/LRB 的获利筹码。</li>
+                            <li><b>Re-Distribution（再派发）</b>：派发掉第⼀次 Distribution 的剩余筹码，并且将价格传送到 STDV 2~2.5 区间，形成完整的 PO3。</li>
+                        </ul>
+                        <p>MMXM 没有固定的形式，附图的 MMXM 只是⽰意图。MMXM 描述的是 HTF IRL to ERL 在 LTF 上的表现形式，所有的 HTF IRL to ERL 都是 LTF MMXM。其核⼼概念在于所有低时框的价格⾏为都服务于⾼时框，当低时框上的价格运⾏到⾼时框上的 PDA 时，所有低时框上的价格传递都将反转成为⾼时框的流动性。</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <nav id="toc-nav">
+        <h2>目录</h2>
+        <ul id="toc-list"></ul>
+    </nav>
+</div>
+
+
+<!-- The Image Modal -->
+<div id="imageModal" class="modal">
+  <span class="close">&times;</span>
+  <img class="modal-content" id="modalImage">
+  <div id="caption"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 目录生成与交互 ---
+        const tocList = document.getElementById('toc-list');
+        const collapsiblesForToc = document.querySelectorAll('.main-container > .collapsible, .main-container .content .collapsible');
+        
+        collapsiblesForToc.forEach((collapsible, index) => {
+            const id = 'section-' + index;
+            collapsible.setAttribute('id', id);
+
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            
+            a.textContent = collapsible.textContent.trim();
+            a.href = '#' + id;
+
+            // 设置层级
+            if (collapsible.classList.contains('nested')) {
+                li.className = 'toc-level-1';
+            } else {
+                li.className = 'toc-level-0';
+            }
+
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetElement = document.getElementById(id);
+                
+                // 展开所有父级
+                let parent = targetElement.parentElement.closest('.content');
+                while(parent) {
+                    const parentCollapsible = parent.previousElementSibling;
+                    if(parentCollapsible && !parentCollapsible.classList.contains('active')) {
+                        parentCollapsible.click();
+                    }
+                    parent = parent.parentElement.closest('.content');
+                }
+
+                // 展开自身
+                if (!targetElement.classList.contains('active')) {
+                    targetElement.click();
+                }
+
+                // 滚动到目标位置
+                setTimeout(() => {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300); // 延迟以等待展开动画
+            });
+
+            li.appendChild(a);
+            tocList.appendChild(li);
+        });
+
+        // --- 折叠功能逻辑 ---
+        const allCollapsibles = document.querySelectorAll(".collapsible");
+        allCollapsibles.forEach(collapsible => {
+            collapsible.addEventListener("click", function(e) {
+                e.stopPropagation();
+                this.classList.toggle("active");
+                const content = this.nextElementSibling;
+                if (content.style.maxHeight) {
+                    const scrollHeight = content.scrollHeight;
+                    content.style.maxHeight = null;
+                    updateParentHeight(this, -scrollHeight);
+                } else {
+                    const scrollHeight = content.scrollHeight;
+                    content.style.maxHeight = scrollHeight + "px";
+                    updateParentHeight(this, scrollHeight);
+                }
+            });
+        });
+        function updateParentHeight(element, heightChange) {
+            let parentContent = element.parentElement.closest('.content');
+            while (parentContent) {
+                if (parentContent.style.maxHeight) {
+                    const currentParentHeight = parseFloat(parentContent.style.maxHeight);
+                    const newParentHeight = currentParentHeight + heightChange;
+                    parentContent.style.maxHeight = newParentHeight + "px";
+                }
+                parentContent = parentContent.parentElement.closest('.content');
+            }
+        }
+
+        // --- 图片放大、缩放、拖动 Modal 逻辑 ---
+        const modal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        const captionText = document.getElementById("caption");
+        
+        let currentScale = 1, isDragging = false, startX, startY;
+        let currentTranslateX = 0, currentTranslateY = 0, startTranslateX = 0, startTranslateY = 0;
+
+        function applyTransform() {
+            modalImg.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+        }
+
+        document.querySelectorAll(".content-inner img").forEach(img => {
+            img.onclick = function(){
+                modal.style.display = "block";
+                modalImg.src = this.src;
+                captionText.innerHTML = this.alt;
+                currentScale = 1;
+                currentTranslateX = 0;
+                currentTranslateY = 0;
+                isDragging = false;
+                applyTransform();
+            }
+        });
+
+        const closeBtn = document.querySelector(".modal .close");
+        function closeModal() { modal.style.display = "none"; }
+        closeBtn.onclick = closeModal;
+        modal.onclick = function(event) { if (event.target === modal) closeModal(); }
+
+        modalImg.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            let delta = e.deltaY > 0 ? -0.1 : 0.1;
+            currentScale += delta;
+            if (currentScale < 0.2) currentScale = 0.2;
+            if (currentScale > 5) currentScale = 5;
+            applyTransform();
+        });
+
+        modalImg.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startTranslateX = currentTranslateX;
+            startTranslateY = currentTranslateY;
+            modalImg.classList.add('grabbing');
+            modalImg.style.transition = 'none';
+        });
+
+        modal.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            currentTranslateX = startTranslateX + dx;
+            currentTranslateY = startTranslateY + dy;
+            applyTransform();
+        });
+
+        const stopDragging = function() {
+            if (!isDragging) return;
+            isDragging = false;
+            modalImg.classList.remove('grabbing');
+            modalImg.style.transition = 'transform 0.2s ease';
+        }
+
+        modal.addEventListener('mouseup', stopDragging);
+        modal.addEventListener('mouseleave', stopDragging);
+        
+        // --- 智能搜索功能 ---
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchableSections = document.querySelectorAll('.main-container .collapsible.nested');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            searchResults.innerHTML = '';
+
+            if (query.length === 0) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            let hasResults = false;
+            searchableSections.forEach(section => {
+                const sectionTitle = section.textContent.trim();
+                const content = section.nextElementSibling;
+                const fullText = sectionTitle + ' ' + content.textContent;
+                const searchableTextLower = fullText.toLowerCase();
+                
+                // 从文本中的所有英文单词生成缩写
+                const englishWords = fullText.match(/[a-zA-Z]+/g);
+                let abbreviation = '';
+                if (englishWords) {
+                    abbreviation = englishWords.map(w => w[0]).join('').toLowerCase();
+                }
+
+                if (searchableTextLower.includes(query) || (abbreviation && abbreviation.includes(query))) {
+                    hasResults = true;
+                    const resultLink = document.createElement('a');
+                    resultLink.href = '#' + section.id;
+                    resultLink.textContent = sectionTitle;
+                    resultLink.dataset.targetId = section.id;
+
+                    resultLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const targetId = this.dataset.targetId;
+                        const targetElement = document.getElementById(targetId);
+
+                        // 展开所有父级
+                        let parent = targetElement.parentElement.closest('.content');
+                        while(parent) {
+                            const parentCollapsible = parent.previousElementSibling;
+                            if(parentCollapsible && !parentCollapsible.classList.contains('active')) {
+                                parentCollapsible.click();
+                            }
+                            parent = parent.parentElement.closest('.content');
+                        }
+                        
+                        // 展开自身
+                        if (!targetElement.classList.contains('active')) {
+                             targetElement.click();
+                        }
+                        
+                        // 滚动到目标
+                        setTimeout(() => {
+                           targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500); // 增加延迟以确保动画完成
+
+                        // 清空搜索
+                        searchInput.value = '';
+                        searchResults.style.display = 'none';
+                    });
+
+                    searchResults.appendChild(resultLink);
+                }
+            });
+
+            searchResults.style.display = hasResults ? 'block' : 'none';
+        });
+
+        // 点击其他地方关闭搜索结果
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+</body>
+</html> 
