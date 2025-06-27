@@ -324,6 +324,51 @@
             background-color: #f5f5f5;
         }
 
+        /* 移动端适配 */
+        @media (max-width: 992px) {
+            body {
+                padding: 20px 10px; /* 减小内边距 */
+            }
+
+            #search-widget {
+                position: relative; /* 改为相对定位，脱离固定布局 */
+                top: auto;
+                left: auto;
+                width: 100%;
+                margin-bottom: 20px; /* 与下方内容隔开 */
+                z-index: 1; /* 确保不会被其他元素覆盖 */
+                padding: 0 10px; /* 给搜索框一些边距 */
+                box-sizing: border-box;
+            }
+
+            #searchInput {
+                width: 100%; /* 搜索框占满宽度 */
+                box-sizing: border-box; /* 确保 padding 不会超出宽度 */
+            }
+            
+            #searchInput:focus {
+                width: 100%; /* 焦点状态下也占满 */
+            }
+
+            .page-wrapper {
+                flex-direction: column; /* 垂直排列 */
+                gap: 0; /* 移除间距 */
+                align-items: center; /* 居中内容 */
+                padding: 0;
+            }
+
+            .main-container {
+                max-width: 100%; /* 占满宽度 */
+                border-radius: 12px;
+                padding: 16px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            #toc-nav {
+                display: none; /* 隐藏目录 */
+            }
+        }
     </style>
 </head>
 <body>
@@ -334,6 +379,10 @@
 </div>
 
 <div class="page-wrapper">
+    <nav id="toc-nav">
+        <h2>目录</h2>
+        <ul id="toc-list"></ul>
+    </nav>
     <div class="main-container">
         <h1>ICT 核心内容笔记</h1>
 
@@ -1013,10 +1062,6 @@
 
     </div>
 
-    <nav id="toc-nav">
-        <h2>目录</h2>
-        <ul id="toc-list"></ul>
-    </nav>
 </div>
 
 
